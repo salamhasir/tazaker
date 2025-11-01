@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>تفاصيل التذكرة</title>
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Tajawal', sans-serif;
+      background: #f5faf5;
+      padding: 20px;
+      color: #333;
+    }
+    header {
+      background: #006c35;
+      color: white;
+      padding: 15px;
+      border-radius: 10px;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .card {
+      background: white;
+      border-radius: 10px;
+      padding: 20px;
+      box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+    }
+    .status {
+      font-weight: bold;
+      padding: 5px 10px;
+      border-radius: 5px;
+      display: inline-block;
+      margin-top: 5px;
+    }
+    .status.red { background: #ffd6d6; color: #b30000; }
+    .status.green { background: #d6ffde; color: #007a2a; }
+    a {
+      display: inline-block;
+      margin-top: 20px;
+      text-decoration: none;
+      color: #006c35;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>🎫 تفاصيل التذكرة</h1>
+  </header>
+
+  <div id="ticket"></div>
+
+  <a href="index.html">← الرجوع إلى القائمة</a>
+
+  <script>
+    const API_URL = "https://script.google.com/macros/s/AKfycbxxxx/exec"; // نفس رابط Apps Script
+    const params = new URLSearchParams(window.location.search);
+    const id = parseInt(params.get('id'));
+
+    async function loadTicket() {
+      const res = await fetch(API_URL);
+      const tickets = await res.json();
+      const t = tickets[id - 1]; // لأننا بدأنا العد من 1 في index.html
+
+      if (!t) {
+        document.getElementById('ticket').innerHTML = "<p>❌ لم يتم العثور على التذكرة.</p>";
+        return;
+      }
+
+      const status = (t['حالة التذكرة'] || '').trim();
+      const colorClass = status.includes('تحت') ? 'red' : status.includes('تم') ? 'green' : '';
+
+      document.getElementById('ticket').innerHTML = `
+        <div class="card">
+          <h2>${t['نوع التذكرة'] || 'بدون نوع'}</h2>
+          <p><b>📅 التاريخ:</b> ${t['تاريخ التذكرة'] || ''}</p>
+          <p><b>👤 مقدم التذكرة:</b> ${t['اسم مقدم التذكرة'] || ''}</p>
+          <p><b>📞 الجوال:</b> ${t['الجوال'] || ''}</p>
+          <p><b>💬 ملخص الشكوى:</b> ${t['ملخص الشكوى'] || ''}</p>
+          <p><b>👨‍💼 المسؤول عن المعالجة:</b> ${t['المسؤول عن المعالجة'] || ''}</p>
+          <p><b>🏢 القسم:</b> ${t['القسم'] || ''}</p>
+          <p><b>🔧 الإجراء المتخذ:</b> ${t['الإجراء المتخذ'] || ''}</p>
+          <p><b>📍 الحالة:</b> <span class="status ${colorClass}">${status || 'غير محدد'}</span></p>
+        </div>
+      `;
+    }
+
+    loadTicket();
+  </script>
+
+</body>
+</html>
