@@ -1,123 +1,75 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>نظام التذاكر</title>
-  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
-  <link rel="icon" href="data:,">
-  <style>
-    body {
-      font-family: 'Tajawal', sans-serif;
-      background: #f4f7f5;
-      margin: 0;
-      padding: 20px;
-      color: #333;
-    }
-    header {
-      background: #006c35;
-      color: white;
-      padding: 15px;
-      border-radius: 10px;
-      text-align: center;
-      margin-bottom: 20px;
-    }
-    .ticket {
-      background: white;
-      border-radius: 10px;
-      box-shadow: 0 3px 6px rgba(0,0,0,0.1);
-      padding: 15px;
-      margin-bottom: 15px;
-      transition: 0.3s;
-      cursor: pointer;
-    }
-    .ticket:hover {
-      background: #eaf9ee;
-      transform: scale(1.01);
-    }
-    .ticket h3 {
-      margin: 0 0 5px 0;
-      color: #006c35;
-    }
-    .ticket p {
-      margin: 3px 0;
-    }
-    .status {
-      font-weight: bold;
-      padding: 5px 10px;
-      border-radius: 5px;
-      display: inline-block;
-      margin-top: 5px;
-    }
-    .status.red { background: #ffd6d6; color: #b30000; }
-    .status.green { background: #d6ffde; color: #007a2a; }
-  </style>
-</head>
-<body>
+<script>
+  // رابط Google Script
+  const SHEET_URL = "https://script.google.com/macros/s/AKfycbx0xI2XKn5fZAaL5kM9Vr1RQJMH77Pe59swEt84RGO-Ksp3nqnC6YEKb_3IInWNMP8k/exec";
+  const PROXY = "https://corsproxy.io/?" + encodeURIComponent(SHEET_URL);
 
-  <header>
-    <h1>📋 قائمة التذاكر</h1>
-  </header>
+  // دالة لتنسيق التاريخ
+  function formatDate(dateStr) {
+    if (!dateStr) return '';
+    try {
+      const date = new Date(dateStr);
+      const options = { year: 'numeric', month: 'long', day: 'numeric' };
+      return date.toLocaleDateString('ar-SA', options);
+    } catch {
+      return dateStr;
+    }
+  }
 
-  <div id="tickets">جارٍ تحميل التذاكر...</div>
+  async function loadTickets() {
+    try {
+      const res = await fetch(PROXY);
+      const text = await res.text();
 
-  <script>
-    // ✅ رابط Google Apps Script المنشور (رابطك الحقيقي)
-    const SHEET_URL = "https://script.google.com/macros/s/AKfycbx0xI2XKn5fZAaL5kM9Vr1RQJMH77Pe59swEt84RGO-Ksp3nqnC6YEKb_3IInWNMP8k/exec";
-
-    // ✅ رابط Proxy لتجاوز CORS (موثوق ويعمل مع GitHub Pages)
-    const PROXY = "https://corsproxy.io/?" + encodeURIComponent(SHEET_URL);
-
-    async function loadTickets() {
+      // دعم صيغتين مختلفتين من JSON
+      let tickets;
       try {
-        const res = await fetch(PROXY);
-        const text = await res.text();
-
-        // معالجة الاستجابة بطريقة مرنة (تدعم JSON مباشر أو JSON داخل Proxy)
-        let tickets;
-        try {
-          tickets = JSON.parse(text);
-        } catch {
-          const parsed = JSON.parse(text);
-          tickets = JSON.parse(parsed.contents || "[]");
-        }
-
-        const container = document.getElementById('tickets');
-        container.innerHTML = '';
-
-        tickets.forEach((t, i) => {
-          const status = (t['حالة التذكرة'] || '').trim();
-          const colorClass = status.includes('تحت') ? 'red' :
-                             status.includes('تم') ? 'green' : '';
-
-          const div = document.createElement('div');
-          div.className = 'ticket';
-          div.innerHTML = `
-            <h3>${t['نوع التذكرة'] || 'بدون نوع'}</h3>
-            <p>📅 ${t['تاريخ التذكرة'] || ''}</p>
-            <p>👤 ${t['اسم مقدم التذكرة'] || ''}</p>
-            <span class="status ${colorClass}">${status || 'غير محدد'}</span>
-          `;
-          div.addEventListener('click', () => {
-            const id = i + 1;
-            window.location.href = `ticket.html?id=${id}`;
-          });
-          container.appendChild(div);
-        });
-
-        if (!tickets.length) {
-          container.innerHTML = '<p>⚠️ لا توجد تذاكر حالياً.</p>';
-        }
-
-      } catch (error) {
-        console.error('❌ خطأ في تحميل البيانات:', error);
-        document.getElementById('tickets').innerHTML =
-          '<p style="color:red">⚠️ حدث خطأ أثناء تحميل البيانات. تأكد من أن الرابط صحيح ومفتوح للعامة.</p>';
+        tickets = JSON.parse(text);
+      } catch {
+        const parsed = JSON.parse(text);
+        tickets = JSON.parse(parsed.contents || "[]");
       }
+
+      const container = document.getElementById('tickets');
+      container.innerHTML = '';
+
+      tickets.forEach((t, i) => {
+        const status = (t['حالة التذكرة'] || '').trim();
+        const colorClass = status.includes('تحت') ? 'red' : status.includes('تم') ? 'green' : '';
+
+        const title = t['نوع التذكرة'] || 'تذكرة بدون عنوان';
+        const summary = t['ملخص الشكوى'] ? t['ملخص الشكوى'].substring(0, 80) + '...' : 'لا يوجد ملخص';
+        const date = formatDate(t['تاريخ التذكرة']);
+        const person = t['اسم مقدم التذكرة'] || 'غير معروف';
+        const handler = t['المسؤول عن المعالجة'] || 'لم يحدد بعد';
+
+        const div = document.createElement('div');
+        div.className = 'ticket';
+        div.innerHTML = `
+          <h3 style="color:#006c35; font-size:20px; margin-bottom:6px;">${title}</h3>
+          <p style="color:#666; font-size:14px; margin-bottom:8px;">💬 ${summary}</p>
+          <p style="margin:4px 0;">🗓️ ${date}</p>
+          <p style="margin:4px 0;">👤 ${person}</p>
+          <p style="margin:4px 0;">👨‍💼 ${handler}</p>
+          <span class="status ${colorClass}">${status || 'غير محدد'}</span>
+        `;
+
+        div.addEventListener('click', () => {
+          const id = i + 1;
+          window.location.href = `ticket.html?id=${id}`;
+        });
+        container.appendChild(div);
+      });
+
+      if (!tickets.length) {
+        container.innerHTML = '<p>⚠️ لا توجد تذاكر حالياً.</p>';
+      }
+
+    } catch (error) {
+      console.error('❌ خطأ في تحميل البيانات:', error);
+      document.getElementById('tickets').innerHTML =
+        '<p style="color:red">⚠️ حدث خطأ أثناء تحميل البيانات. تأكد من أن الرابط صحيح ومفتوح للعامة.</p>';
     }
+  }
 
-    loadTickets();
-  </script>
-
-</body>
-</html>
+  loadTickets();
+</script>
