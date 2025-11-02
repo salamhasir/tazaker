@@ -1,75 +1,150 @@
-<script>
-  // رابط Google Script
-  const SHEET_URL = "https://script.google.com/macros/s/AKfycbx0xI2XKn5fZAaL5kM9Vr1RQJMH77Pe59swEt84RGO-Ksp3nqnC6YEKb_3IInWNMP8k/exec";
-  const PROXY = "https://corsproxy.io/?" + encodeURIComponent(SHEET_URL);
-
-  // دالة لتنسيق التاريخ
-  function formatDate(dateStr) {
-    if (!dateStr) return '';
-    try {
-      const date = new Date(dateStr);
-      const options = { year: 'numeric', month: 'long', day: 'numeric' };
-      return date.toLocaleDateString('ar-SA', options);
-    } catch {
-      return dateStr;
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>نظام التذاكر</title>
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="icon" href="data:,">
+  <style>
+    body {
+      font-family: 'Tajawal', sans-serif;
+      background: #f4f7f5;
+      margin: 0;
+      padding: 20px;
+      color: #333;
     }
-  }
+    header {
+      background: #006c35;
+      color: white;
+      padding: 15px;
+      border-radius: 10px;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .ticket {
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+      padding: 15px 20px;
+      margin-bottom: 15px;
+      transition: 0.3s;
+      cursor: pointer;
+      line-height: 1.6;
+    }
+    .ticket:hover {
+      background: #eaf9ee;
+      transform: scale(1.01);
+    }
+    .ticket h3 {
+      margin: 0 0 5px 0;
+      color: #006c35;
+      font-size: 20px;
+    }
+    .ticket p {
+      margin: 2px 0;
+      font-size: 14px;
+      color: #333;
+    }
+    .status {
+      font-weight: bold;
+      padding: 5px 10px;
+      border-radius: 5px;
+      display: inline-block;
+      margin-top: 8px;
+      font-size: 13px;
+    }
+    .status.red { background: #ffd6d6; color: #b30000; }
+    .status.green { background: #d6ffde; color: #007a2a; }
+  </style>
+</head>
+<body>
 
-  async function loadTickets() {
-    try {
-      const res = await fetch(PROXY);
-      const text = await res.text();
+  <header>
+    <h1>📋 قائمة التذاكر</h1>
+  </header>
 
-      // دعم صيغتين مختلفتين من JSON
-      let tickets;
+  <div id="tickets">جارٍ تحميل التذاكر...</div>
+
+  <script>
+    // رابط Google Apps Script
+    const SHEET_URL = "https://script.google.com/macros/s/AKfycbx0xI2XKn5fZAaL5kM9Vr1RQJMH77Pe59swEt84RGO-Ksp3nqnC6YEKb_3IInWNMP8k/exec";
+    const PROXY = "https://corsproxy.io/?" + encodeURIComponent(SHEET_URL);
+
+    // 🔹 دالة لتنسيق التاريخ بالعربية
+    function formatDate(dateStr) {
+      if (!dateStr) return '';
       try {
-        tickets = JSON.parse(text);
+        const date = new Date(dateStr);
+        const options = { year: 'numeric', month: 'long', day: 'numeric' };
+        return date.toLocaleDateString('ar-SA', options);
       } catch {
-        const parsed = JSON.parse(text);
-        tickets = JSON.parse(parsed.contents || "[]");
+        return dateStr;
       }
-
-      const container = document.getElementById('tickets');
-      container.innerHTML = '';
-
-      tickets.forEach((t, i) => {
-        const status = (t['حالة التذكرة'] || '').trim();
-        const colorClass = status.includes('تحت') ? 'red' : status.includes('تم') ? 'green' : '';
-
-        const title = t['نوع التذكرة'] || 'تذكرة بدون عنوان';
-        const summary = t['ملخص الشكوى'] ? t['ملخص الشكوى'].substring(0, 80) + '...' : 'لا يوجد ملخص';
-        const date = formatDate(t['تاريخ التذكرة']);
-        const person = t['اسم مقدم التذكرة'] || 'غير معروف';
-        const handler = t['المسؤول عن المعالجة'] || 'لم يحدد بعد';
-
-        const div = document.createElement('div');
-        div.className = 'ticket';
-        div.innerHTML = `
-          <h3 style="color:#006c35; font-size:20px; margin-bottom:6px;">${title}</h3>
-          <p style="color:#666; font-size:14px; margin-bottom:8px;">💬 ${summary}</p>
-          <p style="margin:4px 0;">🗓️ ${date}</p>
-          <p style="margin:4px 0;">👤 ${person}</p>
-          <p style="margin:4px 0;">👨‍💼 ${handler}</p>
-          <span class="status ${colorClass}">${status || 'غير محدد'}</span>
-        `;
-
-        div.addEventListener('click', () => {
-          const id = i + 1;
-          window.location.href = `ticket.html?id=${id}`;
-        });
-        container.appendChild(div);
-      });
-
-      if (!tickets.length) {
-        container.innerHTML = '<p>⚠️ لا توجد تذاكر حالياً.</p>';
-      }
-
-    } catch (error) {
-      console.error('❌ خطأ في تحميل البيانات:', error);
-      document.getElementById('tickets').innerHTML =
-        '<p style="color:red">⚠️ حدث خطأ أثناء تحميل البيانات. تأكد من أن الرابط صحيح ومفتوح للعامة.</p>';
     }
-  }
 
-  loadTickets();
-</script>
+    document.addEventListener("DOMContentLoaded", async () => {
+      const container = document.getElementById('tickets');
+      if (!container) return alert("⚠️ لم يتم العثور على العنصر #tickets");
+
+      container.innerHTML = "<p>⏳ يتم الآن تحميل البيانات...</p>";
+
+      try {
+        const res = await fetch(PROXY);
+        const text = await res.text();
+
+        // 🔹 معالجة JSON سواء كان مباشر أو داخل Proxy
+        let tickets;
+        try {
+          tickets = JSON.parse(text);
+        } catch {
+          const parsed = JSON.parse(text);
+          tickets = JSON.parse(parsed.contents || "[]");
+        }
+
+        container.innerHTML = '';
+
+        tickets.forEach((t, i) => {
+          const status = (t['حالة التذكرة'] || '').trim();
+          const colorClass = status.includes('تحت') ? 'red' : status.includes('تم') ? 'green' : '';
+
+          const title = t['نوع التذكرة'] || 'بدون عنوان';
+          const summary = t['ملخص الشكوى'] ? t['ملخص الشكوى'].substring(0, 90) + '...' : 'لا يوجد ملخص';
+          const date = formatDate(t['تاريخ التذكرة']);
+          const submitter = t['اسم مقدم التذكرة'] || 'غير معروف';
+          const handler = t['المسؤول عن المعالجة'] || 'لم يحدد بعد';
+
+          const div = document.createElement('div');
+          div.className = 'ticket';
+          div.innerHTML = `
+            <h3>${title}</h3>
+            <p>💬 ${summary}</p>
+            <p>📅 ${date}</p>
+            <p>👤 ${submitter}</p>
+            <p>👨‍💼 ${handler}</p>
+            <span class="status ${colorClass}">${status || 'غير محدد'}</span>
+          `;
+
+          // عند النقر على البطاقة
+          div.addEventListener('click', () => {
+            const id = i + 1;
+            window.location.href = `ticket.html?id=${id}`;
+          });
+
+          container.appendChild(div);
+        });
+
+        if (!tickets.length) {
+          container.innerHTML = '<p>⚠️ لا توجد تذاكر حالياً.</p>';
+        }
+
+      } catch (error) {
+        console.error('❌ خطأ في تحميل البيانات:', error);
+        container.innerHTML =
+          '<p style="color:red;">⚠️ حدث خطأ أثناء تحميل البيانات. تأكد من أن الرابط مفتوح للعامة.</p>';
+      }
+    });
+  </script>
+
+</body>
+</html>
