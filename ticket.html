@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>تفاصيل التذكرة</title>
   <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="icon" href="data:,">
   <style>
     body {
       font-family: 'Tajawal', sans-serif;
@@ -55,25 +56,37 @@
   <a href="index.html">← الرجوع إلى القائمة</a>
 
   <script>
-    const SHEET_URL = "https://script.google.com/macros/s/AKfycbxxxx/exec";
-    const PROXY = "https://api.allorigins.win/get?url=" + encodeURIComponent(SHEET_URL);
+    // رابط Google Script الحقيقي
+    const SHEET_URL = "https://script.google.com/macros/s/AKfycbx0xI2XKn5fZAaL5kM9Vr1RQJMH77Pe59swEt84RGO-Ksp3nqnC6YEKb_3IInWNMP8k/exec";
+    // Proxy لتجاوز CORS
+    const PROXY = "https://corsproxy.io/?" + encodeURIComponent(SHEET_URL);
+    // قراءة رقم التذكرة من الرابط
     const params = new URLSearchParams(window.location.search);
     const id = parseInt(params.get('id'));
 
     async function loadTicket() {
       try {
         const res = await fetch(PROXY);
-        const data = await res.json();
-        const tickets = JSON.parse(data.contents);
-        const t = tickets[id - 1];
+        const text = await res.text();
 
+        // 👇 نحاول قراءة JSON سواء كان مباشر أو داخل Proxy
+        let tickets;
+        try {
+          tickets = JSON.parse(text);
+        } catch {
+          const parsed = JSON.parse(text);
+          tickets = JSON.parse(parsed.contents || "[]");
+        }
+
+        const t = tickets[id - 1];
         if (!t) {
           document.getElementById('ticket').innerHTML = "<p>❌ لم يتم العثور على التذكرة.</p>";
           return;
         }
 
         const status = (t['حالة التذكرة'] || '').trim();
-        const colorClass = status.includes('تحت') ? 'red' : status.includes('تم') ? 'green' : '';
+        const colorClass = status.includes('تحت') ? 'red' :
+                           status.includes('تم') ? 'green' : '';
 
         document.getElementById('ticket').innerHTML = `
           <div class="card">
@@ -91,7 +104,7 @@
       } catch (error) {
         console.error('❌ خطأ في تحميل التذكرة:', error);
         document.getElementById('ticket').innerHTML =
-          '<p style="color:red">⚠️ حدث خطأ أثناء تحميل بيانات التذكرة.</p>';
+          '<p style="color:red">⚠️ لم يتم تحميل بيانات التذكرة. تحقق من صلاحية النشر أو الرابط.</p>';
       }
     }
 
