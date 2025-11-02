@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>نظام التذاكر</title>
   <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="icon" href="data:,">
   <style>
     body {
       font-family: 'Tajawal', sans-serif;
@@ -61,24 +62,33 @@
   <div id="tickets">جارٍ تحميل التذاكر...</div>
 
   <script>
-    // رابط Google Apps Script الخاص بك
-    const SHEET_URL = "https://script.google.com/macros/s/AKfycbxxxx/exec";
+    // ✅ رابط Google Apps Script المنشور (رابطك الحقيقي)
+    const SHEET_URL = "https://script.google.com/macros/s/AKfycbx0xI2XKn5fZAaL5kM9Vr1RQJMH77Pe59swEt84RGO-Ksp3nqnC6YEKb_3IInWNMP8k/exec";
 
-    // رابط Proxy لتجاوز CORS
-    const PROXY = "https://api.allorigins.win/get?url=" + encodeURIComponent(SHEET_URL);
+    // ✅ رابط Proxy لتجاوز CORS (موثوق ويعمل مع GitHub Pages)
+    const PROXY = "https://corsproxy.io/?" + encodeURIComponent(SHEET_URL);
 
     async function loadTickets() {
       try {
         const res = await fetch(PROXY);
-        const data = await res.json();
-        const tickets = JSON.parse(data.contents);
+        const text = await res.text();
+
+        // معالجة الاستجابة بطريقة مرنة (تدعم JSON مباشر أو JSON داخل Proxy)
+        let tickets;
+        try {
+          tickets = JSON.parse(text);
+        } catch {
+          const parsed = JSON.parse(text);
+          tickets = JSON.parse(parsed.contents || "[]");
+        }
 
         const container = document.getElementById('tickets');
         container.innerHTML = '';
 
         tickets.forEach((t, i) => {
           const status = (t['حالة التذكرة'] || '').trim();
-          const colorClass = status.includes('تحت') ? 'red' : status.includes('تم') ? 'green' : '';
+          const colorClass = status.includes('تحت') ? 'red' :
+                             status.includes('تم') ? 'green' : '';
 
           const div = document.createElement('div');
           div.className = 'ticket';
@@ -95,10 +105,14 @@
           container.appendChild(div);
         });
 
+        if (!tickets.length) {
+          container.innerHTML = '<p>⚠️ لا توجد تذاكر حالياً.</p>';
+        }
+
       } catch (error) {
         console.error('❌ خطأ في تحميل البيانات:', error);
         document.getElementById('tickets').innerHTML =
-          '<p style="color:red">⚠️ حدث خطأ أثناء تحميل البيانات. تأكد من رابط Google Script.</p>';
+          '<p style="color:red">⚠️ حدث خطأ أثناء تحميل البيانات. تأكد من أن الرابط صحيح ومفتوح للعامة.</p>';
       }
     }
 
