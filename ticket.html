@@ -50,41 +50,49 @@
     <h1>🎫 تفاصيل التذكرة</h1>
   </header>
 
-  <div id="ticket"></div>
+  <div id="ticket">جارٍ تحميل البيانات...</div>
 
   <a href="index.html">← الرجوع إلى القائمة</a>
 
   <script>
-    const API_URL = "https://script.google.com/macros/s/AKfycbxxxx/exec"; // نفس رابط Apps Script
+    const SHEET_URL = "https://script.google.com/macros/s/AKfycbxxxx/exec";
+    const PROXY = "https://api.allorigins.win/get?url=" + encodeURIComponent(SHEET_URL);
     const params = new URLSearchParams(window.location.search);
     const id = parseInt(params.get('id'));
 
     async function loadTicket() {
-      const res = await fetch(API_URL);
-      const tickets = await res.json();
-      const t = tickets[id - 1]; // لأننا بدأنا العد من 1 في index.html
+      try {
+        const res = await fetch(PROXY);
+        const data = await res.json();
+        const tickets = JSON.parse(data.contents);
+        const t = tickets[id - 1];
 
-      if (!t) {
-        document.getElementById('ticket').innerHTML = "<p>❌ لم يتم العثور على التذكرة.</p>";
-        return;
+        if (!t) {
+          document.getElementById('ticket').innerHTML = "<p>❌ لم يتم العثور على التذكرة.</p>";
+          return;
+        }
+
+        const status = (t['حالة التذكرة'] || '').trim();
+        const colorClass = status.includes('تحت') ? 'red' : status.includes('تم') ? 'green' : '';
+
+        document.getElementById('ticket').innerHTML = `
+          <div class="card">
+            <h2>${t['نوع التذكرة'] || 'بدون نوع'}</h2>
+            <p><b>📅 التاريخ:</b> ${t['تاريخ التذكرة'] || ''}</p>
+            <p><b>👤 مقدم التذكرة:</b> ${t['اسم مقدم التذكرة'] || ''}</p>
+            <p><b>📞 الجوال:</b> ${t['الجوال'] || ''}</p>
+            <p><b>💬 ملخص الشكوى:</b> ${t['ملخص الشكوى'] || ''}</p>
+            <p><b>👨‍💼 المسؤول عن المعالجة:</b> ${t['المسؤول عن المعالجة'] || ''}</p>
+            <p><b>🏢 القسم:</b> ${t['القسم'] || ''}</p>
+            <p><b>🔧 الإجراء المتخذ:</b> ${t['الإجراء المتخذ'] || ''}</p>
+            <p><b>📍 الحالة:</b> <span class="status ${colorClass}">${status || 'غير محدد'}</span></p>
+          </div>
+        `;
+      } catch (error) {
+        console.error('❌ خطأ في تحميل التذكرة:', error);
+        document.getElementById('ticket').innerHTML =
+          '<p style="color:red">⚠️ حدث خطأ أثناء تحميل بيانات التذكرة.</p>';
       }
-
-      const status = (t['حالة التذكرة'] || '').trim();
-      const colorClass = status.includes('تحت') ? 'red' : status.includes('تم') ? 'green' : '';
-
-      document.getElementById('ticket').innerHTML = `
-        <div class="card">
-          <h2>${t['نوع التذكرة'] || 'بدون نوع'}</h2>
-          <p><b>📅 التاريخ:</b> ${t['تاريخ التذكرة'] || ''}</p>
-          <p><b>👤 مقدم التذكرة:</b> ${t['اسم مقدم التذكرة'] || ''}</p>
-          <p><b>📞 الجوال:</b> ${t['الجوال'] || ''}</p>
-          <p><b>💬 ملخص الشكوى:</b> ${t['ملخص الشكوى'] || ''}</p>
-          <p><b>👨‍💼 المسؤول عن المعالجة:</b> ${t['المسؤول عن المعالجة'] || ''}</p>
-          <p><b>🏢 القسم:</b> ${t['القسم'] || ''}</p>
-          <p><b>🔧 الإجراء المتخذ:</b> ${t['الإجراء المتخذ'] || ''}</p>
-          <p><b>📍 الحالة:</b> <span class="status ${colorClass}">${status || 'غير محدد'}</span></p>
-        </div>
-      `;
     }
 
     loadTicket();
