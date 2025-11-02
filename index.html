@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>نظام التذاكر</title>
-  <link href="https://script.google.com/macros/s/AKfycbx0xI2XKn5fZAaL5kM9Vr1RQJMH77Pe59swEt84RGO-Ksp3nqnC6YEKb_3IInWNMP8k/exec">
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
   <style>
     body {
       font-family: 'Tajawal', sans-serif;
@@ -58,38 +58,48 @@
     <h1>📋 قائمة التذاكر</h1>
   </header>
 
-  <div id="tickets"></div>
+  <div id="tickets">جارٍ تحميل التذاكر...</div>
 
   <script>
-    const API_URL = "https://script.google.com/macros/s/AKfycbxxxx/exec"; // ضع هنا رابط Google Apps Script
+    // رابط Google Apps Script الخاص بك
+    const SHEET_URL = "https://script.google.com/macros/s/AKfycbxxxx/exec";
+
+    // رابط Proxy لتجاوز CORS
+    const PROXY = "https://api.allorigins.win/get?url=" + encodeURIComponent(SHEET_URL);
 
     async function loadTickets() {
-      const res = await fetch(API_URL);
-      const tickets = await res.json();
+      try {
+        const res = await fetch(PROXY);
+        const data = await res.json();
+        const tickets = JSON.parse(data.contents);
 
-      const container = document.getElementById('tickets');
-      container.innerHTML = '';
+        const container = document.getElementById('tickets');
+        container.innerHTML = '';
 
-      tickets.forEach((t, i) => {
-        const status = (t['حالة التذكرة'] || '').trim();
-        const colorClass = status.includes('تحت') ? 'red' : status.includes('تم') ? 'green' : '';
+        tickets.forEach((t, i) => {
+          const status = (t['حالة التذكرة'] || '').trim();
+          const colorClass = status.includes('تحت') ? 'red' : status.includes('تم') ? 'green' : '';
 
-        const div = document.createElement('div');
-        div.className = 'ticket';
-        div.innerHTML = `
-          <h3>${t['نوع التذكرة'] || 'بدون نوع'}</h3>
-          <p>📅 ${t['تاريخ التذكرة'] || ''}</p>
-          <p>👤 ${t['اسم مقدم التذكرة'] || ''}</p>
-          <span class="status ${colorClass}">${status || 'غير محدد'}</span>
-        `;
-
-        div.addEventListener('click', () => {
-          const id = i + 1; // رقم الصف
-          window.location.href = `ticket.html?id=${id}`;
+          const div = document.createElement('div');
+          div.className = 'ticket';
+          div.innerHTML = `
+            <h3>${t['نوع التذكرة'] || 'بدون نوع'}</h3>
+            <p>📅 ${t['تاريخ التذكرة'] || ''}</p>
+            <p>👤 ${t['اسم مقدم التذكرة'] || ''}</p>
+            <span class="status ${colorClass}">${status || 'غير محدد'}</span>
+          `;
+          div.addEventListener('click', () => {
+            const id = i + 1;
+            window.location.href = `ticket.html?id=${id}`;
+          });
+          container.appendChild(div);
         });
 
-        container.appendChild(div);
-      });
+      } catch (error) {
+        console.error('❌ خطأ في تحميل البيانات:', error);
+        document.getElementById('tickets').innerHTML =
+          '<p style="color:red">⚠️ حدث خطأ أثناء تحميل البيانات. تأكد من رابط Google Script.</p>';
+      }
     }
 
     loadTickets();
