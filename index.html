@@ -24,6 +24,40 @@
       margin-bottom: 20px;
     }
 
+    /* ✅ عداد الإحصائيات */
+    .stats {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+    .stat-box {
+      background: white;
+      border: 2px solid #006c35;
+      border-radius: 10px;
+      padding: 10px 20px;
+      text-align: center;
+      min-width: 150px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      transition: 0.3s;
+    }
+    .stat-box:hover {
+      background: #eaf9ee;
+      transform: scale(1.03);
+    }
+    .stat-title {
+      font-size: 14px;
+      color: #006c35;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+    .stat-number {
+      font-size: 22px;
+      font-weight: bold;
+      color: #333;
+    }
+
     /* الفلتر */
     .filter-bar {
       display: flex;
@@ -93,17 +127,27 @@
 <body>
 
   <header>
-  <h1>📋 قائمة التذاكر</h1>
-  <p style="
-    margin: 5px 0 0;
-    font-size: 15px;
-    color: #e4e4e4;
-    font-weight: 400;
-  ">
-    متابعة تذاكر نظام تواصل لقسم الأمن والسلامة والمرافق
-  </p>
-</header>
+    <h1>📋 قائمة التذاكر</h1>
+    <p style="margin:5px 0 0;font-size:15px;color:#e4e4e4;font-weight:400;">
+      متابعة تذاكر نظام تواصل لقسم الأمن والسلامة والمرافق
+    </p>
+  </header>
 
+  <!-- ✅ عداد الإحصائيات -->
+  <div class="stats">
+    <div class="stat-box">
+      <div class="stat-title">📋 إجمالي التذاكر</div>
+      <div class="stat-number" id="totalCount">0</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-title">✅ التذاكر المنجزة</div>
+      <div class="stat-number" id="doneCount">0</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-title">🔄 قيد الإجراء</div>
+      <div class="stat-number" id="underProcessCount">0</div>
+    </div>
+  </div>
 
   <!-- ✅ شريط الفلترة -->
   <div class="filter-bar">
@@ -132,12 +176,22 @@
       }
     }
 
+    // 🔹 تحديث الإحصائيات
+    function updateStats(tickets) {
+      const total = tickets.length;
+      const done = tickets.filter(t => (t['حالة التذكرة'] || '').includes('تم')).length;
+      const underProcess = tickets.filter(t => (t['حالة التذكرة'] || '').includes('تحت')).length;
+
+      document.getElementById('totalCount').textContent = total;
+      document.getElementById('doneCount').textContent = done;
+      document.getElementById('underProcessCount').textContent = underProcess;
+    }
+
     // 🔹 دالة لعرض التذاكر
     function renderTickets(tickets, filter = "all") {
       const container = document.getElementById('tickets');
       container.innerHTML = '';
 
-      // فلترة حسب الحالة
       const filtered = tickets.filter(t => {
         const status = (t['حالة التذكرة'] || '').trim();
         if (filter === "all") return true;
@@ -194,10 +248,10 @@
           tickets = JSON.parse(parsed.contents || "[]");
         }
 
-        // ✅ ترتيب حسب الأحدث أولاً
         tickets.sort((a, b) => new Date(b['تاريخ التذكرة']) - new Date(a['تاريخ التذكرة']));
 
         allTickets = tickets;
+        updateStats(allTickets); // ✅ تحديث العدادات
         renderTickets(allTickets);
 
       } catch (err) {
