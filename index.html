@@ -26,37 +26,60 @@
 
     /* ✅ عداد الإحصائيات */
     .stats {
-      display: flex;
-      justify-content: center;
-      gap: 20px;
-      flex-wrap: wrap;
-      margin-bottom: 20px;
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 15px;
+  }
+
+  .stat-box {
+    background: white;
+    border: 1.5px solid #006c35;
+    border-radius: 8px;
+    padding: 6px 12px;
+    text-align: center;
+    min-width: 110px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    transition: 0.3s;
+  }
+
+  .stat-box:hover {
+    background: #eaf9ee;
+    transform: scale(1.02);
+  }
+
+  .stat-title {
+    font-size: 12px;
+    color: #006c35;
+    margin-bottom: 3px;
+    font-weight: bold;
+  }
+
+  .stat-number {
+    font-size: 18px;
+    font-weight: bold;
+    color: #333;
+    line-height: 1.2;
+  }
+
+  /* ✅ تحسين العرض على الجوال */
+  @media (max-width: 600px) {
+    .stats {
+      gap: 8px;
     }
     .stat-box {
-      background: white;
-      border: 2px solid #006c35;
-      border-radius: 10px;
-      padding: 10px 20px;
-      text-align: center;
-      min-width: 150px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-      transition: 0.3s;
-    }
-    .stat-box:hover {
-      background: #eaf9ee;
-      transform: scale(1.03);
+      min-width: 95px;
+      padding: 5px 8px;
     }
     .stat-title {
-      font-size: 14px;
-      color: #006c35;
-      margin-bottom: 5px;
-      font-weight: bold;
+      font-size: 11px;
     }
     .stat-number {
-      font-size: 22px;
-      font-weight: bold;
-      color: #333;
+      font-size: 16px;
     }
+  }
+
 
     /* الفلتر */
     .filter-bar {
